@@ -90,6 +90,7 @@ def get_popularities():#统计下载量以及完成数
                 #匹配集数信息
                 ep_num = re.findall("\[\d\d\]", torrent['title'])
                 ep_num = ep_num + re.findall("\[\d\dV\d\]", torrent['title'])
+                ep_num = ep_num + re.findall("\[\d\]", torrent['title'])
                 ep_num = ep_num + re.findall("\[\d\dv\d\]", torrent['title'])
                 ep_num = ep_num + re.findall("\[\d\dEND\]", torrent['title'])
                 ep_num = ep_num + re.findall("\s\d\d\s", torrent['title'])
@@ -107,7 +108,7 @@ def get_popularities():#统计下载量以及完成数
                     try:
                         for ep in ep_num:
                             if str.strip(ep)!="":
-                                ep_num = int(re.findall("\d\d", ep)[0])
+                                ep_num = int(re.findall("\d\d?", ep)[0])
                                 break
                         downloads[int(ep_num)] += torrent['downloads']
                         finished[int(ep_num)] += torrent['finished']
