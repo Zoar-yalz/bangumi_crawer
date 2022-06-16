@@ -6,11 +6,11 @@ import numpy as np
 from tqdm import tqdm
 
 # 爬取网址
-current = 'https://bangumi.moe/api/bangumi/current'
-search = 'https://bangumi.moe/api/torrent/search/'
-fetch_name='https://bangumi.moe/api/tag/fetch/'
-current_bangumi_json = './current_bangumi.json'
-bangumi_info_json='./bangumi_info.json'
+current = 'https://bangumi.moe/api/bangumi/current'#目前的连载动画
+search = 'https://bangumi.moe/api/torrent/search/'#搜索页面，使用post+id的方式获取搜索结果
+fetch_name='https://bangumi.moe/api/tag/fetch/'#获取番剧具体信息
+current_bangumi_json = './current_bangumi.json'#存放目前的连载动画
+bangumi_info_json='./bangumi_info.json'#存储具体信息
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36 Edg/102.0.1245.39"}
 
@@ -24,30 +24,30 @@ def load_page(url):
     return request
 
 
-def get_Json(url):
+def get_Json(url):#获取json对象
     request = requests.get(url, headers=headers)
     return request.json()
 
 
-def get_current_bangumi():
+def get_current_bangumi():#获取当前番剧列表
     current_bangumi = get_Json(current)
     with open(current_bangumi_json, "w") as file:
         json.dump(current_bangumi, file)
 
 
-def load_Json(file):
+def load_Json(file):#加载json文件
     with open(file, 'r',encoding='UTF-8') as file:
         return json.load(file)
 
 
-def get_torrents():
+def get_torrents():#搜索全部种子数据
     bangumi_tag_ids = get_tag_ids()
     for tag_id in tqdm(bangumi_tag_ids):
         data = {"tag_id": [tag_id]}
-        res = requests.post(url=search, json=data, headers=headers)
+        res = requests.post(url=search, json=data, headers=headers)#post数据
         search_result = res.json()
         torrents = search_result['torrents']
-        for i in range(2, search_result['page_count'] + 1):
+        for i in range(2, search_result['page_count'] + 1):#翻页post
             data = {"tag_id": [tag_id], 'p': i}
             res = requests.post(url=search, json=data, headers=headers)
             torrents = torrents + res.json()['torrents']
@@ -55,7 +55,7 @@ def get_torrents():
             json.dump(torrents, file)
 
 
-def get_tag_ids():
+def get_tag_ids():#获取番剧id列表
     current_bangumi = load_Json(current_bangumi_json)
     bangumi_tag_ids = set()
     id2name = dict()
@@ -65,7 +65,7 @@ def get_tag_ids():
     return bangumi_tag_ids
 
 
-def get_tag_id2name():
+def get_tag_id2name():#获取番剧名字
     bangumi_info = load_Json(bangumi_info_json)
     tag_id2name=dict()
     for bangumi in bangumi_info:
@@ -75,7 +75,7 @@ def get_tag_id2name():
             tag_id2name[bangumi['_id']]=bangumi['name']
     return tag_id2name
 
-def get_popularities():
+def get_popularities():#统计下载量以及完成数
     # get_torrents()
     tag_ids = get_tag_ids()
     id2name = get_tag_id2name()
@@ -87,7 +87,7 @@ def get_popularities():
             finished = [0] * 50
             bangumi = dict()
             for torrent in torrents:
-
+                #匹配集数信息
                 ep_num = re.findall("\[\d\d\]", torrent['title'])
                 ep_num = ep_num + re.findall("\[\d\dV\d\]", torrent['title'])
                 ep_num = ep_num + re.findall("\[\d\dv\d\]", torrent['title'])
@@ -115,13 +115,15 @@ def get_popularities():
                         print(ep_num)
                         print(torrent['title'])
                         print(tag_id)
+
             bangumi['tag_id'] = tag_id;
             bangumi['downloads'] = downloads
             bangumi['finished'] = finished
             bangumi['name'] = id2name[tag_id]
+
             with open('result/' + tag_id + '.json', 'w') as fp:
                 fp.write(json.dumps(bangumi))
-                bangumis.append(bangumi)
+                bangumis.append(bangumi)#写入
             pass;
     return bangumis
 
