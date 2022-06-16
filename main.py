@@ -1,6 +1,8 @@
 import requests
 import re
 import json
+import pandas as pd
+import numpy as np
 from tqdm import tqdm
 
 # 爬取网址
@@ -8,6 +10,7 @@ current = 'https://bangumi.moe/api/bangumi/current'
 search = 'https://bangumi.moe/api/torrent/search/'
 fetch_name='https://bangumi.moe/api/tag/fetch/'
 current_bangumi_json = './current_bangumi.json'
+bangumi_info_json='./bangumi_info.json'
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36 Edg/102.0.1245.39"}
 
@@ -33,7 +36,7 @@ def get_current_bangumi():
 
 
 def load_Json(file):
-    with open(file, 'r') as file:
+    with open(file, 'r',encoding='UTF-8') as file:
         return json.load(file)
 
 
@@ -63,26 +66,16 @@ def get_tag_ids():
 
 
 def get_tag_id2name():
-    current_bangumi = load_Json(current_bangumi_json)
-    bangumi_tag_ids = set()
-    _ids=list()
-    id2tag_id=dict()
-    tag_id2name = dict()
-    for bangumi in current_bangumi:
-        bangumi_tag_ids.add(bangumi['tag_id'])
-        id2tag_id[bangumi['_id']]=bangumi['tag_id']
-        _ids.append(bangumi['_id'])
-
-    data = {"_ids": _ids}
-    res = requests.post(url=fetch_name, json=data, headers=headers)
-    fetch_results=res.json()
-    for fetch in fetch_results:
-        id=fetch['_id']
-        tag_id2name[id2tag_id[id]] = fetch['name']
+    bangumi_info = load_Json(bangumi_info_json)
+    tag_id2name=dict()
+    for bangumi in bangumi_info:
+        if bangumi['locale'].__contains__('zh_cn'):
+            tag_id2name[bangumi['_id']]=bangumi['locale']['zh_cn']
+        else:
+            tag_id2name[bangumi['_id']]=bangumi['name']
     return tag_id2name
 
-
-if __name__ == "__main__":
+def get_popularities():
     # get_torrents()
     tag_ids = get_tag_ids()
     id2name = get_tag_id2name()
@@ -130,5 +123,18 @@ if __name__ == "__main__":
                 fp.write(json.dumps(bangumi))
                 bangumis.append(bangumi)
             pass;
+    return bangumis
 
-    print(bangumis)
+if __name__ == "__main__":
+    bangumis=get_popularities()
+    data=list()
+    for bangumi in bangumis:
+        tmp=list()
+        tmp.append(bangumi['name'])
+        tmp+=bangumi['downloads'][1:]
+        tmp+=bangumi['finished'][1:]
+        data.append(tmp)
+    pass
+    data=pd.DataFrame(data)
+    data.to_csv('popularity.csv',encoding="gbk")
+    print(data)
