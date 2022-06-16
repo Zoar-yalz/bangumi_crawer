@@ -130,6 +130,7 @@ def get_popularities():#统计下载量以及完成数
 if __name__ == "__main__":
     bangumis=get_popularities()
     data=list()
+    label=['序号','标题']+[str(i)+'集下载量' for i in range(1,50)]+[str(i)+'集完成量' for i in range(1,50)]
     for bangumi in bangumis:
         tmp=list()
         tmp.append(bangumi['name'])
@@ -138,5 +139,5 @@ if __name__ == "__main__":
         data.append(tmp)
     pass
     data=pd.DataFrame(data)
-    data.to_csv('popularity.csv',encoding="gbk")
+    data.to_csv('popularity.csv',encoding="gbk",index_label=label)
     print(data)
