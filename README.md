@@ -1,2 +1,3 @@
 # bangumi_crawer
-一个简单的爬虫，用于获取bangumi.moe网站的新番下载量
+一个用于获取bangumi.moe网站的新番下载量的爬虫
+番剧信息的json需要在list页面里面手动获取
